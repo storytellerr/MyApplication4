@@ -1,4 +1,4 @@
-package com.example.shashank.myapplication
+package com.example.shashank.myapplication.Activities
 
 import android.Manifest
 import android.content.DialogInterface
@@ -16,6 +16,8 @@ import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import com.example.shashank.myapplication.Contacts.ContactModel
@@ -23,6 +25,8 @@ import com.example.shashank.myapplication.ListView.DataAdapter
 import com.example.shashank.myapplication.ListView.Model
 import com.example.shashank.myapplication.ListView.ModelObject
 import com.example.shashank.myapplication.ListView.RequestInterface
+import com.example.shashank.myapplication.R
+import com.google.firebase.auth.FirebaseAuth
 import com.jakewharton.rxbinding2.view.RxView
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -53,18 +57,17 @@ class MainActivity : AppCompatActivity(), DataAdapter.Listener {
     private var mAdapter: DataAdapter? = null
     private lateinit var list_view: RecyclerView
     var path="error"
-
+    private lateinit var auth: FirebaseAuth
     override fun onCreate(savedInstanceState: Bundle?) {
+        auth = FirebaseAuth.getInstance()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         list_view = findViewById(R.id.rv_list)
         mCompositeDisposable = CompositeDisposable()
-
+        val name = getSharedPreferences("mypref", MODE_PRIVATE).getString("loged_in","")
         initRecyclerView()
-
         loadJSON()
-
-       RxView.clicks(fabb).subscribe(
+        RxView.clicks(fabb).subscribe(
                {
 
            Log.d("hello","start")
@@ -73,9 +76,9 @@ class MainActivity : AppCompatActivity(), DataAdapter.Listener {
            snackbar(path)
 
 
-       },{
+        },{
 
-       },{
+        },{
            Log.d("hello","oncomplete")
            if(path!=="error")
            {
@@ -84,6 +87,27 @@ class MainActivity : AppCompatActivity(), DataAdapter.Listener {
            }
 
        })
+    }
+    override
+    fun onCreateOptionsMenu(menu: Menu): Boolean {
+        // Inflate the menu to use in the action bar
+        val inflater = menuInflater
+        inflater.inflate(R.menu.menu, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+        when(item?.itemId){
+            R.id.logout->{
+                auth.signOut()
+                getSharedPreferences("mypref", 0).edit().clear().commit()
+                val intent = Intent(this@MainActivity, StartUp::class.java)
+                startActivity(intent)
+                finish()
+
+            }
+        }
+        return super.onOptionsItemSelected(item)
     }
 
     public fun snackbar(path:String){
@@ -97,9 +121,6 @@ class MainActivity : AppCompatActivity(), DataAdapter.Listener {
         intent.setDataAndType(Uri.fromFile(file), "text/csv")
         startActivity(intent)
     }
-
-
-
 
 
     private fun initRecyclerView() {
@@ -293,4 +314,6 @@ class MainActivity : AppCompatActivity(), DataAdapter.Listener {
 
         val REQUEST_ID_MULTIPLE_PERMISSIONS = 1
     }
+
+
 }
